@@ -9,14 +9,15 @@ import java.util.Map;
 import java.util.TimeZone;
 
 import javax.persistence.RollbackException;
-import com.capgemini.go.exception.ExceptionConstants;
 import com.capgemini.go.repository.RetailerInventoryRepository;
 import com.capgemini.go.repository.UserRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import com.capgemini.go.bean.RetailerInventoryBean;
+import com.capgemini.go.dto.RetailerDTO;
 import com.capgemini.go.dto.RetailerInventoryDTO;
 import com.capgemini.go.dto.UserDTO;
 import com.capgemini.go.exception.RetailerInventoryException;
@@ -24,14 +25,26 @@ import com.capgemini.go.exception.RetailerInventoryException;
 import com.capgemini.go.utility.GoUtility;
 @Service
 public class RetailerInventoryServiceImpl implements RetailerInventoryService {
-	
 
-	
 	@Autowired
 	private RetailerInventoryRepository retailerInventoryRepository;
 	@Autowired
 	private UserRepository userRepository;
 
+	@Autowired
+	RestTemplate restTemplate;
+	
+	private String authenticationURL = "http://authentication-service/app/admin/viewAllRetailers";
+	
+	//Delivery Time Report
+	/*******************************************************************************************************
+	 * - Function Name : getItemWiseDeliveryTimeReport <br>
+	 * - Description : to get Item wise Delivery Time Report <br>
+	 * 
+	 * @param String retailerId
+	 * @return List<RetailerInventoryBean>
+	 * @throws RetailerInventoryException
+	 *******************************************************************************************************/
 	@Override
 	public List<RetailerInventoryBean> getItemWiseDeliveryTimeReport(String retailerId) throws RetailerInventoryException {
 		List<RetailerInventoryBean> result = new ArrayList<RetailerInventoryBean> ();
@@ -40,7 +53,7 @@ public class RetailerInventoryServiceImpl implements RetailerInventoryService {
 			List<UserDTO> userList = (List<UserDTO>) userRepository.findAll();
 			 for (RetailerInventoryDTO deliveredItem : listOfDeliveredItems) {
 				RetailerInventoryBean object = new RetailerInventoryBean ();
-			object.setRetailerId(retailerId);
+				object.setRetailerId(retailerId);
 				for (UserDTO user : userList) {
 					if (user.getUserId().equals(retailerId)) {
 						object.setRetailerName(user.getUserName());
@@ -56,11 +69,19 @@ public class RetailerInventoryServiceImpl implements RetailerInventoryService {
 				result.add(object);
 			}		
 		} catch (RuntimeException error) {
-			throw new RetailerInventoryException ("getItemWiseDeliveryTimeReport - " + ExceptionConstants.INTERNAL_RUNTIME_ERROR);
+			throw new RetailerInventoryException ("INTERNAL_RUNTIME_ERROR");
 		}
 		return result;
 	}
 
+	/*******************************************************************************************************
+	 * - Function Name : getCategoryWiseDeliveryTimeReport <br>
+	 * - Description : to get Category wise Delivery Time Report <br>
+	 * 
+	 * @param String retailerId
+	 * @return List<RetailerInventoryBean>
+	 * @throws RetailerInventoryException
+	 *******************************************************************************************************/
 	@Override
 	public List<RetailerInventoryBean> getCategoryWiseDeliveryTimeReport(String retailerId) throws RetailerInventoryException{
 		List<RetailerInventoryBean> result = new ArrayList<RetailerInventoryBean> ();
@@ -109,61 +130,76 @@ public class RetailerInventoryServiceImpl implements RetailerInventoryService {
 			}
 			
 		} catch (RuntimeException error) {
-			error.printStackTrace();
-			throw new RetailerInventoryException ("getCategoryWiseDeliveryTimeReport - " + ExceptionConstants.INTERNAL_RUNTIME_ERROR);
+			throw new RetailerInventoryException ("INTERNAL_RUNTIME_ERROR");
 		}
 		return result;
 	}
 
+	/*******************************************************************************************************
+	 * - Function Name : updateItemReceiveTimestamp <br>
+	 * - Description : to update receive timestamp of an item in inventory <br>
+	 * 
+	 * @return boolean (true: if receive timestamp updated | false: otherwise)
+	 * @throws RetailerInventoryException
+	 *******************************************************************************************************/
 	@Override
-	public boolean updateProductRecieveTimeStamp(RetailerInventoryDTO retailerinventorydto) throws RetailerInventoryException {
+	public boolean updateItemRecieveTimeStamp(RetailerInventoryDTO retailerinventorydto) throws RetailerInventoryException {
 		boolean receiveTimestampUpdated = false;
 
 		try {
 
 			RetailerInventoryDTO existingItem = (RetailerInventoryDTO) retailerInventoryRepository.findAll();
 			if (existingItem == null) {
-			throw new RetailerInventoryException(
-						"updateProductReceiveTimeStamp - " + ExceptionConstants.PRODUCT_NOT_IN_INVENTORY);
+			throw new RetailerInventoryException("PRODUCT_NOT_IN_INVENTORY");
 			}
 			existingItem.setProductRecieveTimestamp(retailerinventorydto.getProductRecieveTimestamp());
 	
 		} catch (IllegalStateException error) {
-			throw new RetailerInventoryException(
-					"updateProductReceiveTimeStamp - " + ExceptionConstants.INAPPROPRIATE_METHOD_INVOCATION);
+			throw new RetailerInventoryException("INAPPROPRIATE_METHOD_INVOCATION");
 		} catch (RollbackException error) {
-			throw new RetailerInventoryException(
-					"updateProductReceiveTimeStamp - " + ExceptionConstants.FAILURE_COMMIT_CHANGES);
+			throw new RetailerInventoryException("FAILURE_COMMIT_CHANGES");
 		} 
 		receiveTimestampUpdated = true;
 		return receiveTimestampUpdated;
 		
 	}
 	
+	/*******************************************************************************************************
+	 * - Function Name : updateItemSaleTimestamp <br>
+	 * - Description : to update sale timestamp of an item in inventory <br>
+	 * 
+	 * @return boolean (true: if sale timestamp updated | false: otherwise)
+	 * @throws RetailerInventoryException
+	 *******************************************************************************************************/
 	@Override
-	public boolean updateProductSaleTimeStamp(RetailerInventoryDTO retailerinventorydto) throws RetailerInventoryException {
+	public boolean updateItemSaleTimeStamp(RetailerInventoryDTO retailerinventorydto) throws RetailerInventoryException {
 		boolean saleTimestampUpdated = false;
 
 		try {
 			RetailerInventoryDTO existingItem = (RetailerInventoryDTO) retailerInventoryRepository.findAll();
 			if (existingItem == null) {
-				throw new RetailerInventoryException(
-						"updateProductSaleTimeStamp - " + ExceptionConstants.PRODUCT_NOT_IN_INVENTORY);
+				throw new RetailerInventoryException("PRODUCT_NOT_IN_INVENTORY");
 			}
 			existingItem.setProductSaleTimestamp(retailerinventorydto.getProductSaleTimestamp());
 	
 		} catch (IllegalStateException error) {
-			throw new RetailerInventoryException(
-					"updateProductSaleTimeStamp - " + ExceptionConstants.INAPPROPRIATE_METHOD_INVOCATION);
+			throw new RetailerInventoryException("INAPPROPRIATE_METHOD_INVOCATION");
 		} catch (RollbackException error) {
-			throw new RetailerInventoryException(
-					"updateProductSaleTimeStamp - " + ExceptionConstants.FAILURE_COMMIT_CHANGES);
+			throw new RetailerInventoryException("FAILURE_COMMIT_CHANGES");
 		}
 		saleTimestampUpdated = true;
 		return saleTimestampUpdated;
 		
 	}
    
+	//Retailer Management System
+	/*******************************************************************************************************
+	 * - Function Name : getListOfRetailers <br>
+	 * - Description : to get list of retailers in database <br>
+	 * 
+	 * @return List<RetailerInventoryBean>
+	 * @throws RetailerInventoryException
+	 *******************************************************************************************************/
 	@Override
 	public List<RetailerInventoryDTO> getListOfRetailers() {
 				return (List<RetailerInventoryDTO>) retailerInventoryRepository.findAll();
@@ -195,6 +231,16 @@ public class RetailerInventoryServiceImpl implements RetailerInventoryService {
 		return itemAdded;
 	}
 
+	//Shelf Time Report
+	/*******************************************************************************************************
+	 * - Function Name : getMonthlyShelfTimeReport <br>
+	 * - Description : to get Monthly Shelf Time Report <br>
+	 * 
+	 * @param String   retailerId
+	 * @param Calendar dateSelection
+	 * @return List<RetailerInventoryBean>
+	 * @throws RetailerInventoryException
+	 *******************************************************************************************************/
 	@Override
 	public List<RetailerInventoryBean> getMonthlyShelfTimeReport(String retailerId, Calendar dateSelection)
 			throws RetailerInventoryException {
@@ -222,18 +268,24 @@ public class RetailerInventoryServiceImpl implements RetailerInventoryService {
 							soldItem.getProductSaleTimestamp()));
 					object.setDeliveryTimePeriod(null);
 					result.add(object);
-				} else {
-					
 				}
 			}
 		} catch (RuntimeException error) {
-			//GoLog.getLogger(RetailerInventoryServiceImpl.class).error(error.getMessage());
-			throw new RetailerInventoryException ("getMonthlyShelfTimeReport - " + ExceptionConstants.INTERNAL_RUNTIME_ERROR);
+			throw new RetailerInventoryException ("INTERNAL_RUNTIME_ERROR");
 		}
 		return result;
 		 
 	}
 
+	/*******************************************************************************************************
+	 * - Function Name : getQuarterlyShelfTimeReport <br>
+	 * - Description : to get Quarterly Shelf Time Report <br>
+	 * 
+	 * @param String   retailerId
+	 * @param Calendar dateSelection
+	 * @return List<RetailerInventoryBean>
+	 * @throws RetailerInventoryException
+	 *******************************************************************************************************/
 	@Override
 	public List<RetailerInventoryBean> getQuarterlyShelfTimeReport(String retailerId, Calendar dateSelection)
 			throws RetailerInventoryException {
@@ -262,12 +314,20 @@ public class RetailerInventoryServiceImpl implements RetailerInventoryService {
 			
 	
 		} catch (RuntimeException error) {
-			//GoLog.getLogger(RetailerInventoryServiceImpl.class).error(error.getMessage());
-			throw new RetailerInventoryException ("getQuarterlyShelfTimeReport - " + ExceptionConstants.INTERNAL_RUNTIME_ERROR);
+			throw new RetailerInventoryException ("INTERNAL_RUNTIME_ERROR");
 		}
 		return result;
 	}
 
+	/*******************************************************************************************************
+	 * - Function Name : getYearlyShelfTimeReport <br>
+	 * - Description : to get Yearly Shelf Time Report <br>
+	 * 
+	 * @param String   retailerId
+	 * @param Calendar dateSelection
+	 * @return List<RetailerInventoryBean>
+	 * @throws RetailerInventoryException
+	 *******************************************************************************************************/
 	@Override
 	public List<RetailerInventoryBean> getYearlyShelfTimeReport(String retailerId, Calendar dateSelection)
 			throws RetailerInventoryException {
@@ -295,11 +355,24 @@ public class RetailerInventoryServiceImpl implements RetailerInventoryService {
 			}
 
 		} catch (RuntimeException error) {
-			// logger.error(error.getMessage());
-			throw new RetailerInventoryException(
-					"getYearlyShelfTimeReport - " + ExceptionConstants.INTERNAL_RUNTIME_ERROR);
+			throw new RetailerInventoryException("INTERNAL_RUNTIME_ERROR");
 		}
 		return result;
 	}
-
+	/*******************************************************************************************************
+	 * - Function Name : getRetailers <br>
+	 * - Description : to get items in a given retailer's DTO <br>
+	 * 
+	 * @return List<RetailerInventoryDTO>
+	 *******************************************************************************************************/
+	@Override
+	public List<RetailerDTO> getRetailers() {
+		List<UserDTO> listUsers = (List<UserDTO>) userRepository.findAll();
+		List<RetailerDTO> listRetailers = new ArrayList<>();
+		RetailerDTO retailer = restTemplate.getForObject(authenticationURL+((RetailerDTO) listUsers).getUsers(),
+				RetailerDTO.class);
+		listRetailers.add(retailer);
+		return listRetailers;
+		
+	}
 }

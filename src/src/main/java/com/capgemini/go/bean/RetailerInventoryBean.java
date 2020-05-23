@@ -15,6 +15,8 @@ public class RetailerInventoryBean {
 	public RetailerInventoryBean() {
 		super();
 	}
+
+	// Constructor
 	public RetailerInventoryBean(String retailerId, String retailerName, byte productCategoryNumber,
 			String productCategoryName, String productName, String productUniqueId, Period deliveryTimePeriod,
 			Period shelfTimePeriod) {
@@ -28,6 +30,8 @@ public class RetailerInventoryBean {
 		this.deliveryTimePeriod = deliveryTimePeriod;
 		this.shelfTimePeriod = shelfTimePeriod;
 	}
+
+	// Getters And Setters	
 	public String getRetailerId() {
 		return retailerId;
 	}
@@ -76,6 +80,8 @@ public class RetailerInventoryBean {
 	public void setShelfTimePeriod(Period shelfTimePeriod) {
 		this.shelfTimePeriod = shelfTimePeriod;
 	}
+
+	//toString
 	@Override
 	public String toString() {
 		return "RetailerInventoryBean [retailerId=" + retailerId + ", retailerName=" + retailerName
