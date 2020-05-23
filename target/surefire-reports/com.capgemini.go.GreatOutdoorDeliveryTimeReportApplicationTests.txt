@@ -1,0 +1,8 @@
+-------------------------------------------------------------------------------
+Test set: com.capgemini.go.GreatOutdoorDeliveryTimeReportApplicationTests
+-------------------------------------------------------------------------------
+Tests run: 1, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 23.822 s <<< FAILURE! - in com.capgemini.go.GreatOutdoorDeliveryTimeReportApplicationTests
+contextLoads  Time elapsed: 0.025 s  <<< ERROR!
+java.lang.NoClassDefFoundError: org/apache/commons/lang/text/StrLookup
+Caused by: java.lang.ClassNotFoundException: org.apache.commons.lang.text.StrLookup
+
